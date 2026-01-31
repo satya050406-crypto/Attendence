@@ -7,9 +7,14 @@ function StaffHistory({ records }) {
 
     // Filter and sort records for this specific staff member
     const staffRecords = useMemo(() => {
+        if (!Array.isArray(records)) return [];
         return records
-            .filter(r => r.name === name)
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            .filter(r => r && r.name === name)
+            .sort((a, b) => {
+                const dateA = a.timestamp ? new Date(a.timestamp) : 0;
+                const dateB = b.timestamp ? new Date(b.timestamp) : 0;
+                return dateB - dateA;
+            });
     }, [records, name]);
 
     // Calculate stats

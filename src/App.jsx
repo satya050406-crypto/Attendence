@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link } from 'react-router-dom';
 import StaffPanel from './StaffPanel';
 import AdminPanel from './AdminPanel';
 import AdminLogin from './AdminLogin';
@@ -23,7 +23,7 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <div className="container">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -46,7 +46,7 @@ function App() {
           />
         </Routes>
       </div>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
