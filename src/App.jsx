@@ -6,20 +6,55 @@ import AdminLogin from './AdminLogin';
 import StaffHistory from './StaffHistory';
 import Home from './Home';
 
-function App() {
-  const [records, setRecords] = useState(() => {
-    const saved = localStorage.getItem('attendance_records');
-    return saved ? JSON.parse(saved) : [];
-  });
+import { supabase } from './supabaseClient';
 
+function App() {
+  const [records, setRecords] = useState([]);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
+  // Fetch records from Supabase on mount
   useEffect(() => {
-    localStorage.setItem('attendance_records', JSON.stringify(records));
-  }, [records]);
+    const fetchRecords = async () => {
+      const { data, error } = await supabase
+        .from('attendance_records')
+        .select('*')
+        .order('timestamp', { ascending: false });
 
-  const handleCheckIn = (newRecord) => {
-    setRecords(prev => [newRecord, ...prev]);
+      if (error) {
+        console.error('Error fetching records:', error);
+      } else {
+        setRecords(data || []);
+      }
+    };
+
+    fetchRecords();
+
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('attendance_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance_records' }, () => {
+        fetchRecords();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleCheckIn = async (newRecord) => {
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from('attendance_records')
+      .insert([newRecord])
+      .select();
+
+    if (error) {
+      console.error('Error saving record:', error);
+    } else {
+      // Record will be updated via real-time subscription, or manually update state for better UX
+      setRecords(prev => [data[0], ...prev]);
+    }
   };
 
   return (

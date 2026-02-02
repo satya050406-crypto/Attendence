@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ArrowLeft, User, Calendar, Filter, Download, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { supabase } from './supabaseClient';
 
 function AdminPanel({ records }) {
     // State for the selected month (YYYY-MM)
@@ -60,10 +61,20 @@ function AdminPanel({ records }) {
         document.body.removeChild(link);
     };
 
-    const clearRecords = () => {
-        if (window.confirm('Are you sure you want to delete all attendance records? This action cannot be undone.')) {
-            localStorage.removeItem('attendance_records');
-            window.location.reload(); // Quick way to reset state since records come from props via App component's state
+    const clearRecords = async () => {
+        if (window.confirm('Are you sure you want to delete all attendance records from the cloud? This action cannot be undone.')) {
+            const { error } = await supabase
+                .from('attendance_records')
+                .delete()
+                .neq('id', 0); // Delete all rows (neq id 0 is a safe way to target all)
+
+            if (error) {
+                console.error('Error clearing records:', error);
+                alert('Failed to clear records. Check console for details.');
+            } else {
+                // The real-time subscription in App.jsx will update the state
+                alert('All records have been cleared.');
+            }
         }
     };
 
